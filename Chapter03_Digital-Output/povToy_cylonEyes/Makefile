@@ -1,32 +1,30 @@
 
 ##########------------------------------------------------------##########
 ##########              Project-specific Details                ##########
-##########    Check these every time you start a new project    ##########
 ##########------------------------------------------------------##########
-
-MCU   = atmega168p
-F_CPU = 1000000UL  
-BAUD  = 9600UL
-## Also try BAUD = 19200 or 38400 if you're feeling lucky.
+MCU   = atmega328p
+F_CPU = 1000000UL
+BAUD  = 19200UL
 
 ## A directory for common include files and the simple USART library.
-## If you move either the current folder or the Library folder, you'll 
-##  need to change this path to match.
 LIBDIR = ../../AVR-Programming-Library
+
+# these dirs arent used they are just a reminder to where these files are located
+ARDUINO_CORE_DIR = C:/Program Files (x86)/Arduino/libraries
+ARDUINO_LIB_DIR = C:/Users/lmerz/Documents/Arduino/libraries
+
 
 ##########------------------------------------------------------##########
 ##########                 Programmer Defaults                  ##########
-##########          Set up once, then forget about it           ##########
-##########        (Can override.  See bottom of file.)          ##########
 ##########------------------------------------------------------##########
 
-PROGRAMMER_TYPE = usbtiny
+PROGRAMMER_TYPE = avrisp
 # extra arguments to avrdude: baud rate, chip type, -F flag, etc.
-PROGRAMMER_ARGS = 	
+PROGRAMMER_ARGS = -P com8 -b 19200 -v
 
-##########------------------------------------------------------##########
+######
+#####------------------------------------------------------##########
 ##########                  Program Locations                   ##########
-##########     Won't need to change if they're in your PATH     ##########
 ##########------------------------------------------------------##########
 
 CC = avr-gcc
@@ -35,26 +33,24 @@ OBJDUMP = avr-objdump
 AVRSIZE = avr-size
 AVRDUDE = avrdude
 
+
 ##########------------------------------------------------------##########
-##########                   Makefile Magic!                    ##########
-##########         Summary:                                     ##########
-##########             We want a .hex file                      ##########
-##########        Compile source files into .elf                ##########
-##########        Convert .elf file into .hex                   ##########
-##########        You shouldn't need to edit below.             ##########
+##########                   Makefile Directories               ##########
 ##########------------------------------------------------------##########
 
-## The name of your project (without the .c)
-# TARGET = blinkLED
-## Or name it automatically after the enclosing directory
+#The name of your project (without .c)
+# TARGET = blinkLED or name it after enclosing directory
 TARGET = $(lastword $(subst /, ,$(CURDIR)))
 
-# Object files: will find all .c/.h files in current directory
-#  and in LIBDIR.  If you have any other (sub-)directories with code,
-#  you can add them in to SOURCES below in the wildcard statement.
-SOURCES=$(wildcard *.c $(LIBDIR)/*.c)
+# find all c/cpp files in current directory and in LIBDIR variable
+SOURCES=$(wildcard *.c $(LIBDIR)/*.c *.cpp)
 OBJECTS=$(SOURCES:.c=.o)
 HEADERS=$(SOURCES:.c=.h)
+
+
+##########------------------------------------------------------##########
+##########                   Makefile Settings                  ##########
+##########------------------------------------------------------##########
 
 ## Compilation options, type man avr-gcc if you're curious.
 CPPFLAGS = -DF_CPU=$(F_CPU) -DBAUD=$(BAUD) -I. -I$(LIBDIR)
@@ -72,8 +68,11 @@ LDFLAGS += -Wl,--gc-sections
 ## LDFLAGS += -Wl,-u,vfprintf -lprintf_min      ## for smaller printf
 TARGET_ARCH = -mmcu=$(MCU)
 
-## Explicit pattern rules:
-##  To make .o files from .c files 
+
+##########------------------------------------------------------##########
+##########  Explicit pattern rules: make .o files from .c files ##########
+##########------------------------------------------------------##########
+
 %.o: %.c $(HEADERS) Makefile
 	 $(CC) $(CFLAGS) $(CPPFLAGS) $(TARGET_ARCH) -c -o $@ $<;
 
@@ -102,16 +101,17 @@ debug:
 
 # Optionally create listing file from .elf
 # This creates approximate assembly-language equivalent of your code.
-# Useful for debugging time-sensitive bits, 
-# or making sure the compiler does what you want.
 disassemble: $(TARGET).lst
-
 disasm: disassemble
 
 # Optionally show how big the resulting program is 
 size:  $(TARGET).elf
 	$(AVRSIZE) -C --mcu=$(MCU) $(TARGET).elf
 
+
+##########------------------------------------------------------##########
+##########              Clean out files from dir                ##########
+##########------------------------------------------------------##########
 clean:
 	rm -f $(TARGET).elf $(TARGET).hex $(TARGET).obj \
 	$(TARGET).o $(TARGET).d $(TARGET).eep $(TARGET).lst \
@@ -121,16 +121,13 @@ clean:
 squeaky_clean:
 	rm -f *.elf *.hex *.obj *.o *.d *.eep *.lst *.lss *.sym *.map *~ *.eeprom
 
+
 ##########------------------------------------------------------##########
 ##########              Programmer-specific details             ##########
-##########           Flashing code to AVR using avrdude         ##########
 ##########------------------------------------------------------##########
 
 flash: $(TARGET).hex 
 	$(AVRDUDE) -c $(PROGRAMMER_TYPE) -p $(MCU) $(PROGRAMMER_ARGS) -U flash:w:$<
-
-## An alias
-program: flash
 
 flash_eeprom: $(TARGET).eeprom
 	$(AVRDUDE) -c $(PROGRAMMER_TYPE) -p $(MCU) $(PROGRAMMER_ARGS) -U eeprom:w:$<
@@ -138,36 +135,17 @@ flash_eeprom: $(TARGET).eeprom
 avrdude_terminal:
 	$(AVRDUDE) -c $(PROGRAMMER_TYPE) -p $(MCU) $(PROGRAMMER_ARGS) -nt
 
-## If you've got multiple programmers that you use, 
-## you can define them here so that it's easy to switch.
-## To invoke, use something like `make flash_arduinoISP`
-flash_usbtiny: PROGRAMMER_TYPE = usbtiny
-flash_usbtiny: PROGRAMMER_ARGS =  # USBTiny works with no further arguments
-flash_usbtiny: flash
-
-flash_usbasp: PROGRAMMER_TYPE = usbasp
-flash_usbasp: PROGRAMMER_ARGS =  # USBasp works with no further arguments
-flash_usbasp: flash
-
-flash_arduinoISP: PROGRAMMER_TYPE = avrisp
-flash_arduinoISP: PROGRAMMER_ARGS = -b 19200 -P /dev/ttyACM0 
-## (for windows) flash_arduinoISP: PROGRAMMER_ARGS = -b 19200 -P com5
-flash_arduinoISP: flash
-
-flash_109: PROGRAMMER_TYPE = avr109
-flash_109: PROGRAMMER_ARGS = -b 9600 -P /dev/ttyUSB0
-flash_109: flash
 
 ##########------------------------------------------------------##########
-##########       Fuse settings and suitable defaults            ##########
+##########                     Fuse Defaults                    ##########
 ##########------------------------------------------------------##########
 
 ## Mega 48, 88, 168, 328 default values
 LFUSE = 0x62
-HFUSE = 0xdf
+HFUSE = 0xD9
 EFUSE = 0x00
 
-## Generic 
+## Generic fuse setting
 FUSE_STRING = -U lfuse:w:$(LFUSE):m -U hfuse:w:$(HFUSE):m -U efuse:w:$(EFUSE):m 
 
 fuses: 
@@ -176,9 +154,21 @@ fuses:
 show_fuses:
 	$(AVRDUDE) -c $(PROGRAMMER_TYPE) -p $(MCU) $(PROGRAMMER_ARGS) -nv	
 
+
+##########------------------------------------------------------##########
+##########                     Fuse settings                    ##########
+##########------------------------------------------------------##########
+
 ## Called with no extra definitions, sets to defaults
 set_default_fuses:  FUSE_STRING = -U lfuse:w:$(LFUSE):m -U hfuse:w:$(HFUSE):m -U efuse:w:$(EFUSE):m 
 set_default_fuses:  fuses
+
+## set arduino based fuses
+set_arduino_fuses: LFUSE = 0xff
+set_arduino_fuses: HFUSE = 0xde
+set_arduino_fuses: EFUSE = 0x05
+set_arduino_fuses: FUSE_STRING = -U lfuse:w:$(LFUSE):m -U hfuse:w:$(HFUSE):m -U efuse:w:$(EFUSE):m
+set_arduino_fuses: fuses
 
 ## Set the fuse byte for full-speed mode
 ## Note: can also be set in firmware for modern chips

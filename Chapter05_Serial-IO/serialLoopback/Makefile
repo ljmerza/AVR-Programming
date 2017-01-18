@@ -4,10 +4,9 @@
 ##########    Check these every time you start a new project    ##########
 ##########------------------------------------------------------##########
 
-MCU   = atmega168p
-F_CPU = 1000000UL  
-BAUD  = 9600UL
-## Also try BAUD = 19200 or 38400 if you're feeling lucky.
+MCU   = atmega328p
+F_CPU = 1000000UL
+BAUD  = 19200UL
 
 ## A directory for common include files and the simple USART library.
 ## If you move either the current folder or the Library folder, you'll 
@@ -20,9 +19,9 @@ LIBDIR = ../../AVR-Programming-Library
 ##########        (Can override.  See bottom of file.)          ##########
 ##########------------------------------------------------------##########
 
-PROGRAMMER_TYPE = usbtiny
+PROGRAMMER_TYPE = usbasp-clone
 # extra arguments to avrdude: baud rate, chip type, -F flag, etc.
-PROGRAMMER_ARGS = 	
+PROGRAMMER_ARGS = -P com8 -v
 
 ##########------------------------------------------------------##########
 ##########                  Program Locations                   ##########

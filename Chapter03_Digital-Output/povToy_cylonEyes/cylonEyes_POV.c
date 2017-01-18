@@ -9,15 +9,15 @@ The only change here is in DELAYTIME.
 #include <avr/io.h>                        /* Defines pins, ports, etc */
 #include <util/delay.h>                     /* Functions to waste time */
 
-#define DELAYTIME 2                                    /* milliseconds */
+#define DELAYTIME 100                                    /* milliseconds */
 
 int main(void) {
   uint8_t i=0;
-  DDRB = 0b11111111;              /* Data Direction Register B: all on */
+  DDRB = 0xFF;              /* Data Direction Register B: all on */
 
   while (1) {
 
-    while (i < 7) {
+    while (i <5) {
       PORTB = (1 << i);                    /* illuminate only i'th pin */
       _delay_ms(DELAYTIME);                                    /* wait */
       i = i + 1;                               /* move to the next LED */
